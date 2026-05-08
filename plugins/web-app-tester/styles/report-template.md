@@ -113,3 +113,18 @@ Steps that were skipped due to this restriction are listed in the table as `🔴
 2. Never describe credential values — redact them as `[REDACTED]` if they appear in test data
 3. Screenshots are attached only for FAILED and BLOCKED steps
 4. The report comment is always a single comment — never split across multiple comments
+
+---
+
+## Report Boundaries (strictly enforced)
+
+**The report is strictly bounded to the sections defined above.** Never add content outside this structure. Prohibited additions include:
+
+- Suggested fixes or workarounds
+- Recommendations or advice
+- Root cause analysis
+- Next steps or action items
+- Code snippets or diffs
+- Explanatory commentary or observations
+
+The report is a test execution record, not a debugging guide. Any insight beyond pass/fail/blocked belongs in a separate human review — not in this comment.

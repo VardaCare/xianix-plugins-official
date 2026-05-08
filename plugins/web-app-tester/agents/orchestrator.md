@@ -210,6 +210,8 @@ Determine the overall result:
 
 Read and follow `providers/github.md` to post the report comment.
 
+The report comment must contain **only** the sections defined in `styles/report-template.md`. Do not add suggested fixes, recommendations, next steps, root cause analysis, explanations, or any content not defined in the template. If you have observations beyond the test results, discard them — they do not belong in this comment.
+
 Post a **single comment** using this structure:
 
 ```
