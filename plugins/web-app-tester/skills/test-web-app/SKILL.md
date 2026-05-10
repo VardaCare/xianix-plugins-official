@@ -1,6 +1,6 @@
 ---
 name: test-web-app
-description: Runs web app behaviour verification for a GitHub PR or Issue. Finds a testable URL, executes a structured test plan via Playwright MCP, and posts a step-by-step test execution report as a GitHub comment.
+description: Runs web app behaviour verification for a GitHub PR or Issue. Finds a testable URL, executes a structured test plan via Playwright CLI (headless Chromium), and posts a step-by-step test execution report as a GitHub comment.
 triggers:
   - /test-web-app
 ---
@@ -17,15 +17,28 @@ Triggers the **orchestrator** agent to run automated browser-based verification 
 
 ## What It Does
 
-1. Fetches all PR/issue content — description, comments, commits, and linked issues
-2. Scans content for a testable URL (preview, staging, deploy URL)
-3. Finds a structured test plan in comments or auto-generates one
-4. Opens a fresh Playwright browser session and executes each step
-5. Retries failed steps up to 3 times before marking them BLOCKED
-6. Posts a structured test execution report as a GitHub comment with step-by-step results
+The orchestrator runs three sequential phases, each backed by its own skill file:
+
+1. **Gather test context** (`skills/gather-test-context/SKILL.md`)
+   - Fetches PR/issue body, comments, commits, and linked issues
+   - Scans content for a testable URL (preview, staging, deploy URL)
+   - Applies the production-URL safety check
+   - Finds an existing test plan or auto-generates one
+
+2. **Run Playwright session** (`skills/run-playwright-session/SKILL.md`)
+   - Resolves `playwright-cli` and ensures Chromium is available
+   - Opens a single headless browser session
+   - Executes each test step adaptively, retrying failures up to 3 times
+   - Captures a screenshot on the final retry of any blocked step
+   - Cleans up temp files
+
+3. **Post test execution report** (`skills/post-test-report/SKILL.md`)
+   - Computes the overall verdict
+   - Composes a comment that strictly conforms to `styles/report-template.md`
+   - Posts it via `providers/github.md`
 
 ## Output
 
-- GitHub comment with test execution table (step | status)
-- Screenshots attached for FAILED and BLOCKED steps
-- Overall verdict: PASSED / FAILED / BLOCKED
+- A single GitHub comment with a step-by-step results table
+- Screenshots described inline (not embedded — GitHub comments do not support file attachments via `gh`)
+- Overall verdict: `PASSED` / `FAILED` / `BLOCKED`
