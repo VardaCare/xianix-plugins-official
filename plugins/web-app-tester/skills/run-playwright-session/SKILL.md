@@ -145,6 +145,7 @@ Always run this, regardless of success or failure:
 
 ```bash
 rm -f _wat_pcli _wat_screenshot_*.png
+rm -rf .playwright-cli/
 ```
 
 GitHub PR/issue comments do not support file attachments via `gh comment`, so the report describes screenshots inline as "captured at point of failure" rather than embedding them — see `providers/github.md`. Deleting the PNGs at the end of this phase is safe.
