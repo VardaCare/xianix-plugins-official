@@ -4,7 +4,7 @@ Use this provider when `git remote get-url origin` contains `dev.azure.com` or `
 
 ## How This Fits with the Rest of the Plugin
 
-- **Reading** — Use `curl` + `AZURE_DEVOPS_TOKEN` to fetch PR metadata, PR threads (comments), and work item details.
+- **Reading** — Use `curl` + `AZURE-DEVOPS-TOKEN` to fetch PR metadata, PR threads (comments), and work item details.
 - **Posting** — Post the test execution report as a PR thread comment. For `wi` entry points, also post a notification comment on the work item.
 
 Azure DevOps PR threads support markdown, so the report format is identical to the GitHub version.
@@ -15,7 +15,7 @@ Required environment variable:
 
 | Variable | Purpose |
 |---|---|
-| `AZURE_DEVOPS_TOKEN` | Azure DevOps Personal Access Token (PAT) |
+| `AZURE-DEVOPS-TOKEN` | Azure DevOps Personal Access Token (PAT) |
 
 ### Token Permissions
 
@@ -71,7 +71,7 @@ fi
 ### Fetching PR Details
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}?api-version=7.1"
 ```
 
@@ -82,7 +82,7 @@ Extracts: title, description, source/target branch, status, author, created date
 Used by `gather-test-context` to scan for testable URLs and existing test plans.
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/threads?api-version=7.1"
 ```
 
@@ -91,14 +91,14 @@ Each thread has a `comments` array. Extract the `content` field from each commen
 ### Discovering Linked Work Items from a PR
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/workitems?api-version=7.1"
 ```
 
 Returns a list of linked work item IDs. Fetch each work item to extract acceptance criteria or context:
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${WI_ID}?api-version=7.1&\$expand=all"
 ```
 
@@ -109,7 +109,7 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
 ### Fetching Work Item Details
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}?api-version=7.1&\$expand=all"
 ```
 
@@ -125,7 +125,7 @@ The repro steps (Bug) or acceptance criteria (PBI/Feature) serve as the **primar
 ### Fetching Work Item Comments
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?api-version=7.1-preview.4"
 ```
 
@@ -136,21 +136,21 @@ Scan comments for testable URLs (same URL pattern as the rest of the plugin).
 Fetch the work item with `$expand=relations` and parse the `relations` array for `ArtifactLink` entries whose `url` matches `vstfs:///Git/PullRequestId/...`:
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}?\$expand=relations&api-version=7.1"
 ```
 
 Extract the PR ID from each matching relation URL (`vstfs:///Git/PullRequestId/<project-id>/<repo-id>/<pr-id>`). Then fetch each linked PR:
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}?api-version=7.1"
 ```
 
 Also fetch each linked PR's threads to scan for deployment URLs:
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/threads?api-version=7.1"
 ```
 
@@ -162,7 +162,7 @@ Store the first active (non-abandoned) linked PR ID as `LINKED_PR_ID` — it is 
 
 **PR entry — post on the PR thread:**
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/threads?api-version=7.1" \
@@ -171,7 +171,7 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
 
 **Work item entry — post on the work item:**
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \
@@ -184,7 +184,7 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
 
 **PR entry:**
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/threads?api-version=7.1" \
@@ -200,7 +200,7 @@ print(json.dumps({'comments':[{'content': body,'commentType':1}],'status':'activ
 **Work item entry with linked PR — post on the linked PR thread:**
 ```bash
 # Use LINKED_PR_ID discovered from the work item relations
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${LINKED_PR_ID}/threads?api-version=7.1" \
@@ -215,7 +215,7 @@ print(json.dumps({'comments':[{'content': body,'commentType':1}],'status':'activ
 
 **Work item entry without linked PR — post directly on the work item:**
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \
@@ -235,7 +235,7 @@ print(json.dumps({'text': body}))
 ### PR entry — post on the PR thread
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${PR_ID}/threads?api-version=7.1" \
@@ -256,7 +256,7 @@ Use this path when `LINKED_PR_ID` is set.
 **Step 1: Post full report on the linked PR thread**
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${LINKED_PR_ID}/threads?api-version=7.1" \
@@ -273,7 +273,7 @@ REPORT
 **Step 2: Post notification comment on the work item**
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \
@@ -295,7 +295,7 @@ print(json.dumps({'text': body}))
 Use this path when `LINKED_PR_ID` is empty.
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   -X POST \
   -H "Content-Type: application/json" \
   "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \

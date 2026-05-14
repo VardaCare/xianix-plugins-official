@@ -55,7 +55,7 @@ Failed and blocked steps are retried up to 3 times before being marked final.
 - Node.js 20+ available (`node --version`)
 - `playwright-cli` installed globally (`npm install -g @playwright/cli`), or `npx` available as fallback
 - **GitHub repos:** `gh` CLI installed and authenticated (run `gh auth login` or set `GITHUB_TOKEN`)
-- **Azure DevOps repos:** `curl` available and `AZURE_DEVOPS_TOKEN` set to a valid PAT
+- **Azure DevOps repos:** `curl` available and `AZURE-DEVOPS-TOKEN` set to a valid PAT
 - See `docs/setup.md` for full setup instructions
 
 ---

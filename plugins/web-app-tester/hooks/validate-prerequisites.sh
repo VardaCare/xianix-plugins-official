@@ -67,9 +67,9 @@ if [ "$PLATFORM" = "AzureDevOps" ]; then
         exit 0
     fi
 
-    # Check AZURE_DEVOPS_TOKEN is set
-    if [ -z "${AZURE_DEVOPS_TOKEN:-}" ]; then
-        echo '{"decision": "block", "reason": "AZURE_DEVOPS_TOKEN is not set. Create a Personal Access Token in Azure DevOps (Work Items: Read+Write, Code: Read, Pull Requests: Read+Write) and export AZURE_DEVOPS_TOKEN=your_pat — see docs/setup.md"}'
+    # Check AZURE-DEVOPS-TOKEN is set
+    if [ -z "${AZURE-DEVOPS-TOKEN:-}" ]; then
+        echo '{"decision": "block", "reason": "AZURE-DEVOPS-TOKEN is not set. Create a Personal Access Token in Azure DevOps (Work Items: Read+Write, Code: Read, Pull Requests: Read+Write) and export AZURE-DEVOPS-TOKEN=your_pat — see docs/setup.md"}'
         exit 0
     fi
 fi

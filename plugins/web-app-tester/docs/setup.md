@@ -116,7 +116,7 @@ The plugin uses `curl` with a Personal Access Token (PAT) to read PR/work item c
 ### Setting the Token
 
 ```bash
-export AZURE_DEVOPS_TOKEN=your_pat_here
+export AZURE-DEVOPS-TOKEN=your_pat_here
 ```
 
 Add this to your shell profile (`.bashrc`, `.zshrc`, etc.) to persist it across sessions.
@@ -154,11 +154,11 @@ This is handled automatically — the plugin installs playwright-cli via `npm in
 **`_wat_pcli` file left in project directory**
 The plugin deletes this wrapper at the end of every run, including failed runs. If it persists, the run was interrupted before cleanup. Delete it manually: `rm _wat_pcli`
 
-**`AZURE_DEVOPS_TOKEN is not set`**
-Export the token: `export AZURE_DEVOPS_TOKEN=your_pat_here`. Create a PAT in Azure DevOps with Work Items (Read+Write), Code (Read), and Pull Requests (Read+Write) scopes.
+**`AZURE-DEVOPS-TOKEN is not set`**
+Export the token: `export AZURE-DEVOPS-TOKEN=your_pat_here`. Create a PAT in Azure DevOps with Work Items (Read+Write), Code (Read), and Pull Requests (Read+Write) scopes.
 
 **`curl` returns 401 for Azure DevOps**
-The PAT may have expired or have insufficient scopes. Re-generate the token in Azure DevOps and re-export `AZURE_DEVOPS_TOKEN`.
+The PAT may have expired or have insufficient scopes. Re-generate the token in Azure DevOps and re-export `AZURE-DEVOPS-TOKEN`.
 
 **`wi` entry returns "no linked PR found"**
 The work item must have at least one pull request linked via the Azure DevOps PR → Work Items relationship. Link the PR from the PR creation page or the work item's "Links" tab, then re-trigger.

@@ -74,21 +74,21 @@ Parse the remote URL and set `API_BASE`, `AZURE_REPO` per `providers/azure-devop
 
 ```bash
 # PR metadata
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${ENTRY_ID}?api-version=7.1"
 
 # PR threads (all comments)
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${ENTRY_ID}/threads?api-version=7.1"
 
 # Linked work items
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${ENTRY_ID}/workitems?api-version=7.1"
 ```
 
 For each linked work item, fetch to extract acceptance criteria or description:
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${WI_ID}?api-version=7.1&\$expand=all"
 ```
 
@@ -102,11 +102,11 @@ Parse the remote URL and set `API_BASE`, `AZURE_REPO` per `providers/azure-devop
 
 ```bash
 # Work item with all fields and relations
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${ENTRY_ID}?api-version=7.1&\$expand=all"
 
 # Work item comments
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/wit/workitems/${ENTRY_ID}/comments?api-version=7.1-preview.4"
 ```
 
@@ -117,9 +117,9 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
 **Discover linked PRs** from the work item relations (see `providers/azure-devops.md`). Store the first active (non-abandoned) linked PR ID as `LINKED_PR_ID`. If a linked PR is found, fetch its metadata and threads:
 
 ```bash
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${LINKED_PR_ID}?api-version=7.1"
-curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+curl -s -u ":${AZURE-DEVOPS-TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${LINKED_PR_ID}/threads?api-version=7.1"
 ```
 

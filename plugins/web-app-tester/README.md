@@ -170,7 +170,7 @@ Screenshot: captured at point of failure
 
 - **Node.js 20+** — required by `playwright-cli` and the Chromium browser install
 - **GitHub repos:** `gh` CLI installed and authenticated (`gh auth login` or `GITHUB_TOKEN` env var)
-- **Azure DevOps repos:** `curl` available and `AZURE_DEVOPS_TOKEN` set to a valid PAT (Work Items R/W, Code R, Pull Requests R/W)
+- **Azure DevOps repos:** `curl` available and `AZURE-DEVOPS-TOKEN` set to a valid PAT (Work Items R/W, Code R, Pull Requests R/W)
 
 See [docs/setup.md](docs/setup.md) for full setup instructions.
 
@@ -181,7 +181,7 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 | Variable | Platform | Required | Purpose |
 |---|---|---|---|
 | `GITHUB_TOKEN` | GitHub | Yes (if `gh auth login` not run) | Authenticate `gh` CLI for reading PRs/issues and posting comments |
-| `AZURE_DEVOPS_TOKEN` | Azure DevOps | Yes | PAT for Azure DevOps REST API — reading PRs/work items and posting comments |
+| `AZURE-DEVOPS-TOKEN` | Azure DevOps | Yes | PAT for Azure DevOps REST API — reading PRs/work items and posting comments |
 
 ---
 
