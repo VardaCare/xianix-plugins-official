@@ -92,9 +92,10 @@ Post a **single comment**. Never split the report across multiple comments.
 Read and follow `providers/azure-devops.md`.
 
 - `ENTRY_TYPE == pr` → post the full report as a PR thread comment on PR `${ENTRY_ID}`
-- `ENTRY_TYPE == wi` → two posts:
+- `ENTRY_TYPE == wi` and `LINKED_PR_ID` is set → two posts:
   1. Post the full report as a PR thread comment on `LINKED_PR_ID`
   2. Post a notification comment on the work item `${ENTRY_ID}` (brief summary only — `OVERALL_RESULT`, step counts, `TEST_URL`, reference to the PR)
+- `ENTRY_TYPE == wi` and `LINKED_PR_ID` is empty → post the full report directly on the work item `${ENTRY_ID}`
 
 See `providers/azure-devops.md` for the exact `curl` commands for each case.
 

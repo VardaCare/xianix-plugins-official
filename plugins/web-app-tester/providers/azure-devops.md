@@ -197,7 +197,7 @@ print(json.dumps({'comments':[{'content': body,'commentType':1}],'status':'activ
 ")"
 ```
 
-**Work item entry — post on the linked PR thread:**
+**Work item entry with linked PR — post on the linked PR thread:**
 ```bash
 # Use LINKED_PR_ID discovered from the work item relations
 curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
@@ -210,6 +210,21 @@ body = '''🤖 web-app-tester — No test plan found (derived from bug #${WORK_I
 
 ${AUTO_GENERATED_STEPS}'''
 print(json.dumps({'comments':[{'content': body,'commentType':1}],'status':'active','properties':{'Microsoft.TeamFoundation.Discussion.SupportsMarkdown':1}}))
+")"
+```
+
+**Work item entry without linked PR — post directly on the work item:**
+```bash
+curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \
+  -d "$(python3 -c "
+import json
+body = '''🤖 web-app-tester — No test plan found (derived from bug #${WORK_ITEM_ID} repro steps). Auto-generated plan, executing now:
+
+${AUTO_GENERATED_STEPS}'''
+print(json.dumps({'text': body}))
 ")"
 ```
 
@@ -234,7 +249,9 @@ REPORT
 )"
 ```
 
-### Work item entry — post on the linked PR thread + notification on the work item
+### Work item entry with linked PR — post on the linked PR thread + notification on the work item
+
+Use this path when `LINKED_PR_ID` is set.
 
 **Step 1: Post full report on the linked PR thread**
 
@@ -271,6 +288,25 @@ body = '''## 🤖 Web App Test Executed
 Full test execution report posted on PR #${LINKED_PR_ID}.'''
 print(json.dumps({'text': body}))
 ")"
+```
+
+### Work item entry without linked PR — post full report directly on the work item
+
+Use this path when `LINKED_PR_ID` is empty.
+
+```bash
+curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  "${API_BASE}/_apis/wit/workitems/${WORK_ITEM_ID}/comments?format=markdown&api-version=7.1-preview.4" \
+  -d "$(python3 -c "
+import json, sys
+body = sys.stdin.read()
+print(json.dumps({'text': body}))
+" <<'REPORT'
+${REPORT_BODY}
+REPORT
+)"
 ```
 
 ---

@@ -114,7 +114,7 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
 - `Bug` → extract repro steps (`Microsoft.VSTS.TCM.ReproSteps`) and root cause (`Microsoft.VSTS.Common.RootCause`). The repro steps are the **primary test plan seed** — treat them as a structured step list if they enumerate navigable steps.
 - `Product Backlog Item`, `User Story`, `Feature` → extract acceptance criteria (`Microsoft.VSTS.Common.AcceptanceCriteria`).
 
-**Discover linked PRs** from the work item relations (see `providers/azure-devops.md`). Store the first active (non-abandoned) linked PR ID as `LINKED_PR_ID`. Fetch that PR's metadata and threads:
+**Discover linked PRs** from the work item relations (see `providers/azure-devops.md`). Store the first active (non-abandoned) linked PR ID as `LINKED_PR_ID`. If a linked PR is found, fetch its metadata and threads:
 
 ```bash
 curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
@@ -123,9 +123,9 @@ curl -s -u ":${AZURE_DEVOPS_TOKEN}" \
   "${API_BASE}/_apis/git/repositories/${AZURE_REPO}/pullrequests/${LINKED_PR_ID}/threads?api-version=7.1"
 ```
 
-Collect: work item title, description, repro steps or acceptance criteria, all work item comments, linked PR description, all linked PR thread comments.
+Collect: work item title, description, repro steps or acceptance criteria, all work item comments, and (if a linked PR exists) linked PR description and all linked PR thread comments.
 
-If no linked PR is found, post the "no URL found" comment on the work item (see Step 2 below) and STOP — the plugin requires a linked PR to discover the deployment URL and post the report.
+If no linked PR is found, set `LINKED_PR_ID=""` and continue — the testable URL will be scanned from the work item content directly, and the report will be posted on the work item itself.
 
 ---
 
