@@ -37,14 +37,19 @@ For full provider command reference, see:
 
 ### GitHub — `ENTRY_TYPE == pr`
 
+Resolve the `--repo` flag from the git remote before running gh commands:
 ```bash
-gh pr view ${ENTRY_ID} --json number,title,body,state,headRefName,baseRefName,url,author,labels,commits,closingIssuesReferences,comments
-gh pr view ${ENTRY_ID} --json closingIssuesReferences --jq '.closingIssuesReferences[].number'
+REPO=$(git remote get-url origin | sed 's|.*github.com[:/]\(.*\)\.git|\1|;s|.*github.com[:/]\(.*\)|\1|')
+```
+
+```bash
+gh pr view ${ENTRY_ID} --repo ${REPO} --json number,title,body,state,headRefName,baseRefName,url,author,labels,commits,closingIssuesReferences,comments
+gh pr view ${ENTRY_ID} --repo ${REPO} --json closingIssuesReferences --jq '.closingIssuesReferences[].number'
 ```
 
 For each linked issue number discovered:
 ```bash
-gh issue view ${ISSUE_NUMBER} --json number,title,body,state,labels,comments
+gh issue view ${ISSUE_NUMBER} --repo ${REPO} --json number,title,body,state,labels,comments
 ```
 
 Collect: PR title, description, all comments, commit messages, linked issue descriptions and comments.
@@ -53,15 +58,20 @@ Collect: PR title, description, all comments, commit messages, linked issue desc
 
 ### GitHub — `ENTRY_TYPE == issue`
 
+Resolve the `--repo` flag from the git remote before running gh commands:
 ```bash
-gh issue view ${ENTRY_ID} --json number,title,body,state,labels,assignees,comments,projectItems
+REPO=$(git remote get-url origin | sed 's|.*github.com[:/]\(.*\)\.git|\1|;s|.*github.com[:/]\(.*\)|\1|')
+```
+
+```bash
+gh issue view ${ENTRY_ID} --repo ${REPO} --json number,title,body,state,labels,assignees,comments,projectItems
 ```
 
 Discover linked PRs:
 ```bash
-gh api "repos/{owner}/{repo}/issues/${ENTRY_ID}/timeline" --paginate \
+gh api "repos/${REPO}/issues/${ENTRY_ID}/timeline" --paginate \
   --jq '.[] | select(.event=="cross-referenced" or .event=="closed") | .source.issue.number // empty'
-gh pr list --search "${ENTRY_ID} in:body" --state all --json number,title,state,headRefName,url,body --limit 20
+gh pr list --repo ${REPO} --search "${ENTRY_ID} in:body" --state all --json number,title,state,headRefName,url,body --limit 20
 ```
 
 Collect: issue title, description, all comments, linked PR descriptions.

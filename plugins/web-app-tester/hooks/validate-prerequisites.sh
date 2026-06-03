@@ -8,18 +8,22 @@ set -euo pipefail
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | grep -o '"command":"[^"]*"' | head -1 | cut -d'"' -f4 2>/dev/null || echo "")
 
-# Check Node.js is available (required for npx and Playwright browser install)
-if ! command -v node > /dev/null 2>&1; then
-    echo '{"decision": "block", "reason": "node is not installed or not in PATH. Node.js 20+ is required to run Playwright tests. Install Node.js from https://nodejs.org — see docs/setup.md"}'
+# Check Python 3.10+ is available (required for Playwright Python and Webwright workflow)
+if ! command -v python3 > /dev/null 2>&1; then
+    echo '{"decision": "block", "reason": "python3 is not installed or not in PATH. Python 3.10+ is required to run Playwright tests via the Webwright workflow. Install Python from https://python.org — see docs/setup.md"}'
     exit 0
 fi
 
-# Check playwright-cli is available (non-blocking if npx is present — orchestrator uses npx fallback)
-if ! command -v playwright-cli > /dev/null 2>&1; then
-    if ! command -v npx > /dev/null 2>&1; then
-        echo '{"decision": "block", "reason": "playwright-cli is not installed and npx is not available. Install Node.js 20+ (which includes npx), or install playwright-cli globally: npm install -g @playwright/cli"}'
-        exit 0
-    fi
+PYTHON_MINOR=$(python3 -c "import sys; print(sys.version_info.major * 100 + sys.version_info.minor)" 2>/dev/null || echo "0")
+if [ "$PYTHON_MINOR" -lt 310 ]; then
+    echo '{"decision": "block", "reason": "Python 3.10+ is required but an older version was found. Upgrade Python — see docs/setup.md"}'
+    exit 0
+fi
+
+# Check playwright Python package is available
+if ! python3 -c "import playwright" > /dev/null 2>&1; then
+    echo '{"decision": "block", "reason": "The playwright Python package is not installed. Run: pip install playwright && playwright install chromium — see docs/setup.md"}'
+    exit 0
 fi
 
 # Detect platform from git remote

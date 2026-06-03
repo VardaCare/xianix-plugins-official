@@ -1,10 +1,10 @@
 ---
 name: run-playwright-session
-description: Phase 2 of web-app-tester. Resolves the playwright-cli wrapper, ensures a Chromium browser is cached, opens a single headless session, and executes the test plan adaptively — taking a DOM snapshot before every interaction, retrying failed steps up to 3 times, and capturing screenshots on the final retry. Honours PRODUCTION_WARNING by skipping data-modifying steps. Always cleans up temp files. Outputs an inline list of per-step results.
+description: Phase 2 of web-app-tester. Follows the Webwright workflow — writes an instrumented Python/Playwright script tailored to the test plan, executes it, reads the structured log to extract per-step results, and self-verifies failures against screenshots. Honours PRODUCTION_WARNING by embedding skip guards in the script. Always cleans up temp files. Outputs an inline list of per-step results.
 disable-model-invocation: true
 ---
 
-# Phase 2 — Run Playwright Session
+# Phase 2 — Run Playwright Session (Webwright)
 
 This skill is invoked by the **orchestrator** agent. It is not a standalone slash command.
 
@@ -26,157 +26,214 @@ A list of result entries (held inline, not written to a file):
 
 ## Execution Rules (strictly enforced)
 
-- Use `playwright-cli` for all browser testing — execute steps adaptively via the command loop, track results inline.
-- Never launch multiple browser sessions for one test run — always use session `-s=wat`.
-- Always delete temp files (`_wat_pcli`, `_wat_screenshot_*.png`) after the run, even if execution fails.
-- Never install npm packages globally except `@playwright/cli` itself, which is required to run.
+- Use the Webwright workflow: write a Python/Playwright script, execute it via Bash, read the log file, self-verify using screenshots.
+- One Bash command at a time — observe output before issuing the next.
+- Always delete `_wat_run/` after the run, even if execution fails.
+- Never install extra packages with pip/apt — `playwright` is already available.
+- Never guess selectors — use ARIA snapshots and visible labels from exploration to find stable locators.
+- Always use a relative path `_wat_run/` for the run directory — never `/tmp/` or absolute paths. All file paths in Bash commands and Python scripts must be relative (e.g. `_wat_run/test_script.py`, not `C:/Project/.../_wat_run/test_script.py`).
+- Detect Python with: `PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)` — use `$PYTHON` for all subsequent calls.
 
 ---
 
-## Step 1: Prepare Playwright CLI and Chromium
+## Step 1: Prepare Chromium
 
-**Resolve playwright-cli once and write a wrapper script `_wat_pcli`:**
-
-Run this single block — it checks, installs if needed, and writes `_wat_pcli` regardless of whether the binary lands on PATH:
+Detect Python and check whether Chromium is already installed:
 
 ```bash
-if command -v playwright-cli > /dev/null 2>&1; then
-  printf '#!/bin/sh\nplaywright-cli "$@"\n' > _wat_pcli && chmod +x _wat_pcli && echo "CLI_READY (PATH)"
-else
-  npm install -g @playwright/cli@latest 2>&1
-  if command -v playwright-cli > /dev/null 2>&1; then
-    printf '#!/bin/sh\nplaywright-cli "$@"\n' > _wat_pcli && chmod +x _wat_pcli && echo "CLI_READY (installed)"
-  else
-    PCLI_JS="$(npm root -g)/@playwright/cli/playwright-cli.js"
-    printf '#!/bin/sh\nnode "%s" "$@"\n' "$PCLI_JS" > _wat_pcli && chmod +x _wat_pcli && echo "CLI_READY (node path)"
-  fi
-fi
+PYTHON=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+echo "Using Python: $PYTHON"
+$PYTHON -c "from playwright.sync_api import sync_playwright; p=sync_playwright().__enter__(); b=p.chromium.launch(headless=True); b.close(); p.__exit__(None,None,None); print('CHROMIUM_OK')" 2>&1
 ```
 
-All three outcomes produce a working `_wat_pcli` wrapper. All browser commands in Step 2 use `./_wat_pcli` — the path is resolved once here and never re-evaluated per command.
+If output is `CHROMIUM_OK` → continue to Step 2.
 
-**Critical:** the package is `@playwright/cli` (the playwright-cli tool), NOT `playwright` (the Node.js library). These are different packages with different behaviour. Never substitute one for the other.
-
-**Check whether Playwright Chromium is already cached before attempting any install:**
+If Chromium is missing → install it immediately without waiting:
 
 ```bash
-node -e "const {chromium}=require('playwright');chromium.executablePath()" 2>/dev/null \
-  && echo "BROWSER_READY" || echo "BROWSER_MISSING"
+$PYTHON -m playwright install chromium 2>&1 && \
+$PYTHON -c "from playwright.sync_api import sync_playwright; p=sync_playwright().__enter__(); b=p.chromium.launch(headless=True); b.close(); p.__exit__(None,None,None); print('CHROMIUM_OK')" 2>&1
 ```
 
-If output is `BROWSER_MISSING` → install the binary **and** its system shared libraries. Try `--with-deps` first (this is what gets `libnss3`, `libglib-2.0.so.0`, `libatk-1.0.so.0`, `libdbus-1.so.3`, etc. installed via `apt-get`). If that path is unavailable (no root / sandboxed runner), fall back to the binary-only install — system libs must already be baked into the environment in that case:
-
-```bash
-npx --yes playwright@1.49.0 install --with-deps chromium 2>&1 \
-  || npx --yes playwright@1.49.0 install chromium 2>&1
-```
-
-**Preflight launch — catch missing system libraries before executing the test plan:**
-
-A cached binary is not enough. Headless Chromium also needs `libnss3`, `libnspr4`, `libglib-2.0.so.0`, `libatk-1.0.so.0`, `libdbus-1.so.3`, and friends. Try a single launch+close cycle. If it fails, the test plan cannot run — **do not iterate the steps and accumulate 9× retry timeouts.**
-
-```bash
-LAUNCH_PROBE=$(node -e "const{chromium}=require('playwright');chromium.launch({headless:true}).then(b=>b.close()).then(()=>console.log('LAUNCH_OK')).catch(e=>{console.error('LAUNCH_FAIL: '+e.message);process.exit(1);})" 2>&1)
-echo "$LAUNCH_PROBE"
-```
-
-If `LAUNCH_PROBE` contains `LAUNCH_OK` → continue to Step 2.
-
-If `LAUNCH_PROBE` contains `LAUNCH_FAIL` and any of `libnss3`, `libglib`, `libatk`, `libdbus`, `shared libraries`, `Host system is missing dependencies`, `install-deps`, `playwright install` → **immediately** mark every step in `TEST_PLAN` as `🔴 BLOCKED` with reason:
+Re-run the probe. If it still fails with `libnss3`, `libglib`, `libatk`, `libdbus`, `shared libraries`, or `missing dependencies` → **immediately** mark every step in `TEST_PLAN` as `🔴 BLOCKED` with reason:
 
 ```
-Sandbox image missing Chromium system shared libraries (libnss3 / libglib / libatk / libdbus / etc.).
-playwright install-deps requires root and is not available in this runner. Rebuild the runner image with the
-system libraries baked in. Recommended Dockerfile additions:
+Sandbox image missing Chromium system shared libraries.
+playwright install-deps requires root and is not available in this runner. Rebuild the runner image with:
 
-  ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-  RUN npm install -g @anthropic-ai/claude-code @playwright/cli playwright \
-      && playwright install --with-deps chromium \
-      && chmod -R a+rX /ms-playwright \
-      && rm -rf /var/lib/apt/lists/* /root/.npm
+  RUN pip install playwright && playwright install --with-deps chromium
 
-Or base the image on mcr.microsoft.com/playwright:v1.49.0-jammy which already includes Chromium + deps.
+Or base the image on mcr.microsoft.com/playwright:v1.49.0-jammy.
 ```
 
-Then skip directly to Step 3 (cleanup) — do **not** attempt `open`, retries, or screenshots. The browser will not launch and every retry will fail identically.
+Skip directly to Step 4 (cleanup) — do not attempt script execution.
 
 ---
 
-## Step 2: Open Browser and Execute Steps Adaptively
+## Step 2: Explore (if needed)
 
-**Navigate to the test URL:**
+Before authoring the final script, run a short scratch script to confirm stable selectors for any step that interacts with a non-obvious element (forms, modals, dynamic widgets). Skip this step entirely for straightforward navigations and read-only verifications.
 
-```bash
-./_wat_pcli -s=wat open "${TEST_URL}"
-```
-
-Use `open` for initial navigation — not `goto`. `open` launches the browser session and loads the URL in one step. `goto` requires an existing open page and will fail with exit code 1 on session start.
-
-**Take an initial snapshot to confirm the page loaded correctly:**
+Write and run scratch scripts as a `cat` heredoc piped to Python:
 
 ```bash
-./_wat_pcli -s=wat snapshot
+cat > _wat_run/scratch.py <<'PYEOF'
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page(viewport={"width": 1280, "height": 1800})
+    page.goto("${TEST_URL}", wait_until="domcontentloaded", timeout=30000)
+    print(page.title())
+    print(page.evaluate("() => document.querySelector('main')?.ariaLabel"))
+    snapshot = page.accessibility.snapshot()
+    print(snapshot)
+    browser.close()
+PYEOF
+$PYTHON _wat_run/scratch.py
 ```
 
-Read the YAML output. If the snapshot shows a login/auth page and the test plan does not include login steps, mark all steps `BLOCKED` with reason `Auth gate detected — no credentials provided` and skip to Step 3.
-
-**For each step in TEST_PLAN, execute adaptively:**
-
-1. **Map the action verb** to the appropriate command:
-   - Navigate / Go to (mid-flow) → `./_wat_pcli -s=wat goto <url>`
-   - Click / Tap → `./_wat_pcli -s=wat click <ref>`
-   - Fill / Enter / Type → `./_wat_pcli -s=wat fill <ref> "<text>"`
-   - Verify / Assert / Confirm / Expect / Check → `./_wat_pcli -s=wat snapshot` then inspect YAML for expected text or element
-
-2. **Before every click or fill**, run `./_wat_pcli -s=wat snapshot` to get live element references from the current DOM. Use the `eN` references from the YAML output to target elements — do not guess CSS selectors.
-
-3. **If `PRODUCTION_WARNING=true`:** skip any step that submits a form or performs a data-modifying action; mark those steps `BLOCKED` with reason `Skipped — production URL, read-only mode`.
-
-4. **After each command**, run `./_wat_pcli -s=wat snapshot` to verify the outcome:
-   - Expected text or element present → mark step `PASSED`
-   - Unexpected blocker (modal, banner, overlay) detected → dismiss it with `./_wat_pcli -s=wat click <dismiss-ref>` and retry the step
-   - Auth redirect detected → mark all remaining steps `BLOCKED` with reason `Auth gate detected mid-run`
-   - Error state or element missing → retry
-
-5. **Retry logic:** up to 3 retries with 2-second waits between attempts:
-   ```bash
-   sleep 2
-   ```
-   On the 3rd failure, capture a screenshot and mark the step `BLOCKED`:
-   ```bash
-   ./_wat_pcli -s=wat screenshot _wat_screenshot_N.png
-   ```
-
-6. **Track results inline** as you go (no JSON file). Build a result entry per step:
-   ```
-   { n, desc, status: PASSED|FAILED|BLOCKED, reason, screenshot }
-   ```
-
-Step statuses:
-- `✅ PASSED` — step executed, expected outcome observed
-- `❌ FAILED` — step executed, expected outcome NOT observed
-- `🔴 BLOCKED` — step could not execute after 3 retries, auth gate detected, or skipped due to production URL
-
-**Close the browser session after all steps complete:**
-
-```bash
-./_wat_pcli -s=wat close
-```
-
-Expected runtime: ~25–35 seconds for a 9-step plan on a cached browser.
+Read the output to confirm page title, visible labels, and ARIA structure. Use this to identify stable locators before writing the final script.
 
 ---
 
-## Step 3: Clean Up
+## Step 3: Write and Execute the Test Script
+
+**Create the run directory using a single-line Python call (works on all platforms):**
+
+```bash
+$PYTHON -c "import os; os.makedirs('_wat_run/screenshots', exist_ok=True)"
+```
+
+**Write `_wat_run/test_script.py` using a bash heredoc redirected to `cat`** — this is the most reliable cross-platform approach in bash (including Git Bash on Windows). Never use `$PYTHON - <<'PYEOF'` for file writing — that stdin-heredoc pattern fails on Windows:
+
+```bash
+cat > _wat_run/test_script.py <<'PYEOF'
+# test script content goes here
+PYEOF
+echo "Script written."
+```
+
+Tailor the script to `TEST_PLAN`.
+
+The script must follow this contract:
+
+1. **Log format** — every step writes exactly one line to `_wat_run/log.txt` in this pipe-delimited format:
+   ```
+   STEP_RESULT|<n>|<STATUS>|<desc>|<reason>
+   ```
+   `<STATUS>` is one of: `PASSED`, `FAILED`, `BLOCKED`
+
+2. **Per-step try/except** — wrap each step in its own `try/except` block so subsequent steps still run after a failure.
+
+3. **Screenshot on failure** — on any exception, save `_wat_run/screenshots/step_<n>_fail.png` before logging `BLOCKED`.
+
+4. **Auth gate detection** — after the initial `page.goto()`, check if the page title or URL contains login/auth indicators. If detected and the test plan has no login steps, log all steps as `BLOCKED` with reason `Auth gate detected — no credentials provided` and exit early.
+
+5. **PRODUCTION_WARNING guard** — if `PRODUCTION_WARNING` is `true`, any step that submits a form or performs a data-modifying action must be skipped: log it as `BLOCKED` with reason `Skipped — production URL, read-only mode`.
+
+6. **Browser config** — always use `p.chromium.launch(headless=True)` with `viewport={"width": 1280, "height": 1800}`. Never use `full_page=True` in screenshots.
+
+**Example script structure** (adapt to the actual TEST_PLAN steps):
+
+```python
+import sys
+from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+
+PRODUCTION_WARNING = "${PRODUCTION_WARNING}" == "true"
+LOG = open("_wat_run/log.txt", "w")
+
+def log_step(n, status, desc, reason=""):
+    line = f"STEP_RESULT|{n}|{status}|{desc}|{reason}"
+    LOG.write(line + "\n")
+    LOG.flush()
+    print(line)
+
+DATA_MODIFYING_VERBS = ("submit", "fill", "type", "click.*button", "delete", "create", "save", "send")
+
+AUTH_INDICATORS = ("login", "sign in", "signin", "authenticate", "password", "/auth", "/login")
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page(viewport={"width": 1280, "height": 1800})
+
+    # Initial navigation
+    try:
+        page.goto("${TEST_URL}", wait_until="domcontentloaded", timeout=30000)
+        title = page.title().lower()
+        url = page.url.lower()
+        if any(ind in title or ind in url for ind in AUTH_INDICATORS):
+            # Check if test plan includes login steps — if not, block all
+            for n, desc in STEPS:  # STEPS is the list of (n, desc) tuples from TEST_PLAN
+                log_step(n, "BLOCKED", desc, "Auth gate detected — no credentials provided")
+            sys.exit(0)
+    except Exception as e:
+        for n, desc in STEPS:
+            log_step(n, "BLOCKED", desc, f"Navigation failed: {e}")
+        sys.exit(1)
+
+    # --- Execute each TEST_PLAN step ---
+    # (Agent writes one try/except block per step, adapted to the actual action)
+
+    # Example step: click
+    try:
+        page.get_by_role("button", name="Submit").click(timeout=10000)
+        page.screenshot(path="_wat_run/screenshots/step_1_passed.png")
+        log_step(1, "PASSED", "Click Submit button")
+    except Exception as e:
+        page.screenshot(path="_wat_run/screenshots/step_1_fail.png")
+        log_step(1, "BLOCKED", "Click Submit button", str(e))
+
+    # Example step: fill (PRODUCTION_WARNING guard)
+    if PRODUCTION_WARNING:
+        log_step(2, "BLOCKED", "Fill contact form", "Skipped — production URL, read-only mode")
+    else:
+        try:
+            page.get_by_label("Email").fill("test@example.com", timeout=10000)
+            log_step(2, "PASSED", "Fill contact form")
+        except Exception as e:
+            page.screenshot(path="_wat_run/screenshots/step_2_fail.png")
+            log_step(2, "BLOCKED", "Fill contact form", str(e))
+
+    # Example step: verify
+    try:
+        page.wait_for_selector("text=Success", timeout=10000)
+        log_step(3, "PASSED", "Verify success message is visible")
+    except Exception as e:
+        page.screenshot(path="_wat_run/screenshots/step_3_fail.png")
+        log_step(3, "FAILED", "Verify success message is visible", "Success message not found after action")
+
+    browser.close()
+
+LOG.close()
+```
+
+**Execute the script:**
+
+```bash
+$PYTHON _wat_run/test_script.py 2>&1
+```
+
+**Read the log:**
+
+```bash
+cat _wat_run/log.txt
+```
+
+Parse each `STEP_RESULT|...` line to build the inline result list. Any step missing from the log (script crashed before reaching it) is marked `BLOCKED` with reason `Script exited before this step was reached`.
+
+**Self-verify failures** — for any step logged as `FAILED` or `BLOCKED`, read the corresponding screenshot using the `Read` tool and confirm the failure is genuine (not a timing issue or transient overlay). If the screenshot shows a transient state (spinner, partial load), re-run that step in a short follow-up scratch script before finalising the result.
+
+---
+
+## Step 4: Clean Up
 
 Always run this, regardless of success or failure:
 
 ```bash
-rm -f _wat_pcli _wat_screenshot_*.png
-rm -rf .playwright-cli/
+rm -rf _wat_run/
 ```
 
-GitHub PR/issue comments do not support file attachments via `gh comment`, so the report describes screenshots inline as "captured at point of failure" rather than embedding them — see `providers/github.md`. Deleting the PNGs at the end of this phase is safe.
+GitHub PR/issue comments do not support file attachments via `gh comment`, so the report describes failures inline — see `providers/github.md`. Deleting screenshots at the end of this phase is safe.
 
 ---
 
