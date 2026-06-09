@@ -1,0 +1,41 @@
+{
+  "name": "code-archaeology-analyst",
+  "version": "2.0.0",
+  "description": "Autonomous codebase archaeology agent. Triggered by a GitHub Issue or Azure DevOps Work Item tagged 'code-archaeology'. Segments the codebase, maps architecture in business language, extracts coding conventions, runs a due diligence audit for defects and structural problems, classifies all work into typed and prioritised items, and delivers a single structured archaeology report as comments on the originating issue or work item.",
+  "author": {
+    "name": "Xianix",
+    "email": "hello@xianix.com",
+    "url": "https://xianix.com"
+  },
+  "homepage": "https://xianix.com",
+  "repository": "https://github.com/xianix-team/plugins-official",
+  "license": "MIT",
+  "keywords": [
+    "code-archaeology",
+    "codebase-analysis",
+    "architecture-mapping",
+    "pattern-extraction",
+    "due-diligence",
+    "debt-classification",
+    "enhancement",
+    "remediation",
+    "migration",
+    "ai-dlc",
+    "github",
+    "azure-devops"
+  ],
+  "commands": ["./commands/code-archaeology.md"],
+  "agents": [
+    "./agents/orchestrator.md",
+    "./agents/segmentation-analyst.md",
+    "./agents/architecture-mapper.md",
+    "./agents/pattern-extractor.md",
+    "./agents/due-diligence-auditor.md",
+    "./agents/debt-classifier.md",
+    "./agents/report-writer.md"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "outputStyles": "./styles/",
+  "providers": "./providers/"
+}
