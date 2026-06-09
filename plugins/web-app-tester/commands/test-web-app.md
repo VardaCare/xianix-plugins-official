@@ -1,6 +1,6 @@
 ---
 name: test-web-app
-description: Verify web app behaviour for a GitHub PR/Issue or Azure DevOps PR/Bug using Playwright CLI (headless Chromium). Finds the testable URL from comments, runs (or auto-generates) a structured test plan, and posts a step-by-step test execution report. Usage: /test-web-app [pr <n> | issue <n> | wi <id>]
+description: Verify web app behaviour for a GitHub PR/Issue or Azure DevOps PR/Bug using the Webwright workflow (Python/Playwright, headless Chromium). Finds the testable URL from comments, runs (or auto-generates) a structured test plan, and posts a step-by-step test execution report. Usage: /test-web-app [pr <n> | issue <n> | wi <id>]
 argument-hint: [pr <n> | issue <n> | wi <id>]
 ---
 
@@ -13,7 +13,7 @@ Invokes the **orchestrator** agent to:
 1. Fetch the PR, Issue, or Bug (work item) description, all comments, linked items, and commits
 2. Scan all content for a testable URL (`Preview URL:`, `Staging URL:`, `Deploy preview:`, etc.)
 3. Find a structured test plan in comments, or auto-generate one from context (Bug repro steps are used directly as the test plan seed)
-4. Execute the test plan step by step using Playwright CLI (headless Chromium) in a single browser session
+4. Execute the test plan using the Webwright workflow — writes a Python/Playwright script, executes it, and self-verifies results against screenshots (headless Chromium)
 5. Post a structured test execution report as a comment on the PR (and a notification on the work item for `wi` entry)
 
 ## Entry Points
@@ -52,8 +52,8 @@ Failed and blocked steps are retried up to 3 times before being marked final.
 
 ## Prerequisites
 
-- Node.js 20+ available (`node --version`)
-- `playwright-cli` installed globally (`npm install -g @playwright/cli`), or `npx` available as fallback
+- Python 3.10+ available (`python3 --version`)
+- `playwright` Python package installed (`pip install playwright && playwright install chromium`)
 - **GitHub repos:** `gh` CLI installed and authenticated (run `gh auth login` or set `GITHUB_TOKEN`)
 - **Azure DevOps repos:** `curl` available and `AZURE-DEVOPS-TOKEN` set to a valid PAT
 - See `docs/setup.md` for full setup instructions
