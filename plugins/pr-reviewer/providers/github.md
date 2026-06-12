@@ -65,11 +65,11 @@ If posting fails, output one warning line and continue.
 
 ### Overall verdict and report body
 
-| Plugin verdict      | `gh pr review` flags |
-|---------------------|----------------------|
-| `APPROVE`           | `--approve --body "<report>"` |
-| `REQUEST CHANGES`   | `--request-changes --body "<report>"` *(see `PR_REVIEWER_BLOCK_ON_CRITICAL` below)* |
-| `NEEDS DISCUSSION`  | `--comment --body "<report>"` |
+| Plugin verdict     | `gh pr review` flags                                                                |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| `APPROVE`          | `--approve --body "<report>"`                                                       |
+| `REQUEST CHANGES`  | `--request-changes --body "<report>"` _(see `PR_REVIEWER_BLOCK_ON_CRITICAL` below)_ |
+| `NEEDS DISCUSSION` | `--comment --body "<report>"`                                                       |
 
 ```bash
 gh pr review <pr-number> --comment --body "<full compiled report>"
@@ -78,16 +78,16 @@ gh pr review <pr-number> --comment --body "<full compiled report>"
 
 #### Optional: `PR_REVIEWER_BLOCK_ON_CRITICAL` (controls merge-blocking behavior)
 
-A `--request-changes` review is a first-class blocking review on GitHub. Under any branch protection rule that requires PR review approval, it blocks the merge button (`Merging is blocked`) until the review is dismissed or the reviewer re-reviews and approves. That is usually what you want when the agent finds CRITICAL issues — but in some workflows (e.g. advisory bot on a repo with strict branch protection, or shadow-mode rollouts) you want the review *visible* but *non-blocking*.
+A `--request-changes` review is a first-class blocking review on GitHub. Under any branch protection rule that requires PR review approval, it blocks the merge button (`Merging is blocked`) until the review is dismissed or the reviewer re-reviews and approves. That is usually what you want when the agent finds CRITICAL issues — but in some workflows (e.g. advisory bot on a repo with strict branch protection, or shadow-mode rollouts) you want the review _visible_ but _non-blocking_.
 
 The `PR_REVIEWER_BLOCK_ON_CRITICAL` environment variable controls this:
 
-| Value | Behavior on `REQUEST CHANGES` verdict |
-|---|---|
-| unset / `true` *(default)* | `gh pr review --request-changes` — blocking review |
-| `false` / `0` / `no` | `gh pr review --comment` — non-blocking comment review (verdict text is still in the body) |
+| Value                      | Behavior on `REQUEST CHANGES` verdict                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| unset / `true` _(default)_ | `gh pr review --request-changes` — blocking review                                         |
+| `false` / `0` / `no`       | `gh pr review --comment` — non-blocking comment review (verdict text is still in the body) |
 
-The verdict label in the report body, the Critical Issues section, and the inline comments are identical in both modes — only the GitHub review *type* changes.
+The verdict label in the report body, the Critical Issues section, and the inline comments are identical in both modes — only the GitHub review _type_ changes.
 
 ```bash
 # Map verdict + PR_REVIEWER_BLOCK_ON_CRITICAL to the gh flag
@@ -135,5 +135,5 @@ Post all inline comments without pausing between them.
 On completion:
 
 ```
-Review posted on PR #<number>: <verdict> — <N> inline comments — https://github.com/<owner>/<repo>/pull/<number>
+✍️ Review posted on PR #<number>: <verdict> — <N> inline comments — https://github.com/<owner>/<repo>/pull/<number>
 ```

@@ -47,7 +47,7 @@ The plugin auto-detects the hosting platform from your git remote URL:
 
 ## Output
 
-The review produces a structured report with verdict with the relevant emojis (`APPROVE`, `REQUEST CHANGES`, or `NEEDS DISCUSSION`), critical issues, warnings, suggestions, and per-category summaries. See `styles/report-template.md` for the full format.
+The review produces a structured report with emoji-prefixed section headings (critical issues, warnings, suggestions, per-category summaries) and a plain-text verdict (`APPROVE`, `REQUEST CHANGES`, or `NEEDS DISCUSSION`). See `styles/report-template.md` for the full format.
 
 ## Prerequisites
 

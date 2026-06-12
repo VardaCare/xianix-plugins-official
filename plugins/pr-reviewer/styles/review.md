@@ -25,6 +25,16 @@ Use these labels consistently across all agents:
 | `SUGGESTION` | Nice-to-have improvements — style, readability, minor optimisation |
 | `POSITIVE` | Specific call-outs of good practices worth noting |
 
+### Severity emojis (inline comments)
+
+When posting inline PR comments (GitHub / Azure DevOps), prefix the body with the severity tag and emoji:
+
+| Label | Emoji | Inline tag format |
+|---|---|---|
+| `CRITICAL` | 🚨 | `**🚨 [CRITICAL]**` |
+| `WARNING` | ⚠️ | `**⚠️ [WARNING]**` |
+| `SUGGESTION` | 💡 | `**💡 [SUGGESTION]**` |
+
 ---
 
 ## Finding Format
@@ -63,17 +73,19 @@ The final PR verdict must be one of exactly three values, rendered as inline cod
 
 ## Section Order
 
-The compiled PR review report must follow this section order:
+The compiled PR review report must follow this section order. Use the emoji prefixes from the table below on every section heading (see `styles/report-template.md`).
 
-1. Header (PR title, author, file counts, verdict)
-2. Summary (2–3 sentences)
-3. Critical Issues
-4. Warnings
-5. Suggestions
-6. Review Details (Code Quality / Security / Test Coverage / Performance)
-7. Files Reviewed (table)
+| # | Section | Heading |
+|---|---|---|
+| 1 | Header | `## 🔍 PR Review Report` (PR title, author, file counts, verdict) |
+| 2 | Summary | `### 📋 Summary` |
+| 3 | Critical Issues | `### 🚨 Critical Issues (Must Fix)` |
+| 4 | Warnings | `### ⚠️ Warnings (Should Fix)` |
+| 5 | Suggestions | `### 💡 Suggestions (Consider Improving)` |
+| 6 | Review Details | `### 📊 Review Details` with `#### 🧹 Code Quality`, `#### 🔒 Security`, `#### 🧪 Test Coverage`, `#### ⚡ Performance` |
+| 7 | Files Reviewed | `### 📁 Files Reviewed` (table) |
 
-Do not reorder or omit sections. If a section has no findings, write:
+Do not reorder or omit sections. The **verdict** field stays plain uppercase text with no emoji — provider vote mapping depends on exact strings. If a section has no findings, write:
 > *No [critical issues / warnings / suggestions] found.*
 
 ---

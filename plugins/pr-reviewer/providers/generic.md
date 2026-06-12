@@ -21,7 +21,7 @@ The file must be written even if the review verdict is `APPROVE` — the file se
 **File format:**
 
 ```markdown
-# PR Review Report
+# 🔍 PR Review Report
 
 Generated: <ISO 8601 timestamp>
 Branch: <current branch>

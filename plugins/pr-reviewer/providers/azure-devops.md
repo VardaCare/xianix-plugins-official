@@ -407,7 +407,7 @@ After compiling the report (step 7 of the orchestrator), write **one JSON object
 |---|---|---|---|
 | `file` | string | yes | Repo-relative path. The script prepends `/` automatically. |
 | `line` | int | yes | 1-indexed line number on the **right** (post-change) side of the diff. |
-| `body` | string | yes | Markdown body of the comment. Must include severity tag, e.g. `**[CRITICAL]** ...`. |
+| `body` | string | yes | Markdown body of the comment. Must include severity tag with emoji, e.g. `**🚨 [CRITICAL]** ...` (see `styles/review.md`). |
 | `severity` | string | no | `critical` / `warning` / `suggestion` — used only for the summary log. |
 
 ```bash
@@ -415,7 +415,7 @@ python3 - <<'PY' > /tmp/pr_inline_findings.jsonl
 import json
 findings = [
     {"file": "Xians.Lib/Agents/Core/ActivityRegistrar.cs", "line": 62, "severity": "critical",
-     "body": "**[CRITICAL] Sync-over-async deadlock risk**\n\n`.GetAwaiter().GetResult()` on `GetClientAsync()` in a sync context is a well-known deadlock pattern..."},
+     "body": "**🚨 [CRITICAL] Sync-over-async deadlock risk**\n\n`.GetAwaiter().GetResult()` on `GetClientAsync()` in a sync context is a well-known deadlock pattern..."},
     # ... one entry per Critical / Warning / Suggestion with a precise file:line ...
 ]
 for f in findings:

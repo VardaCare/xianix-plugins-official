@@ -4,7 +4,7 @@ This template defines the structure for the compiled PR review report. The orche
 
 ---
 
-## PR Review Report
+## 🔍 PR Review Report
 
 **PR:** [title or branch name]
 **Author:** [author]
@@ -21,12 +21,12 @@ This template defines the structure for the compiled PR review report. The orche
 
 ---
 
-### Summary
+### 📋 Summary
 [2-3 sentence overall assessment of the change]
 
 ---
 
-### Critical Issues (Must Fix)
+### 🚨 Critical Issues (Must Fix)
 > Blocking issues that must be resolved before merge
 
 - [ ] `path/to/file.<ext>:42` — [Issue description]
@@ -42,7 +42,7 @@ This template defines the structure for the compiled PR review report. The orche
 
 ---
 
-### Warnings (Should Fix)
+### ⚠️ Warnings (Should Fix)
 > Non-blocking but important — strongly recommended before merge
 
 - [ ] `path/to/file.<ext>:87` — [Issue description with suggested fix]
@@ -51,30 +51,30 @@ This template defines the structure for the compiled PR review report. The orche
 
 ---
 
-### Suggestions (Consider Improving)
+### 💡 Suggestions (Consider Improving)
 > Nice-to-have improvements — address in follow-up if not now
 
 - [ ] `path/to/file.<ext>:120` — [Suggestion]
 
 ---
 
-### Review Details
+### 📊 Review Details
 
-#### Code Quality
+#### 🧹 Code Quality
 [Summary from code-reviewer: naming, structure, duplication, error handling]
 
-#### Security
+#### 🔒 Security
 [Summary from security-reviewer: vulnerabilities found, severity, fixes]
 
-#### Test Coverage
+#### 🧪 Test Coverage
 [Summary from test-reviewer: coverage %, missing tests, test quality issues]
 
-#### Performance
+#### ⚡ Performance
 [Summary from performance-reviewer: bottlenecks, complexity concerns]
 
 ---
 
-### Files Reviewed
+### 📁 Files Reviewed
 | File | Lines Changed | Risk | Notes |
 |------|---------------|------|-------|
 | `src/auth/login.<ext>` | +45/-12 | 🔴 High | Auth logic modified |
